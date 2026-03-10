@@ -10,7 +10,19 @@ creds = Credentials.from_service_account_info(creds_dict, scopes=scopes)
 gc = gspread.authorize(creds)
 sh = gc.open_by_url("https://docs.google.com/spreadsheets/d/1BZ80vE4pwaFBEv3czzK5wYXcxaesJl3Jw9LJWlJ3XU0")
 
-st.header("BACL 2026: Season 1") 
+
+# 1. Create columns with a ratio of 1 to 9 (Total 10 parts)
+col1, col2 = st.columns([1, 9])
+
+with col1:
+    # 2. Set use_container_width=True so it fills the 1/10th column exactly
+    st.image("baca_logo.webp", use_column_width=True)
+
+with col2:
+    # This keeps your title/header aligned next to the logo
+    st.header("BACL 2026: Season 1") 
+
+#st.sidebar.markdown("---") # Visual separator
 
 worksheetEast = sh.get_worksheet(4)
 worksheetSouth = sh.get_worksheet(2)
