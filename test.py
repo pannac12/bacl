@@ -3,6 +3,8 @@ import gspread
 import google.generativeai as genai
 from google.oauth2.service_account import Credentials
 
+# Need to switch to new GenAI module
+# https://github.com/google-gemini/deprecated-generative-ai-python/blob/main/README.md
 
 print("BACL 2026: Season 1") 
 print("Getting data...")
