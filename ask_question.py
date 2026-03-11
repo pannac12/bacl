@@ -3,43 +3,38 @@ import gspread
 import google.generativeai as genai
 from google.oauth2.service_account import Credentials
 
-# Need to switch to new GenAI module
-# https://github.com/google-gemini/deprecated-generative-ai-python/blob/main/README.md
+# Initialize Google Sheets connection
+@st.cache_resource
+def get_gsheets_client():
+    creds_dict = dict(st.secrets["gcp_service_account"])
+    creds_dict["private_key_id"] = creds_dict["private_key"].replace("\\n", "\n")
+    scopes = ["https://www.googleapis.com/auth/spreadsheets", "https://www.googleapis.com/auth/drive"]
+    creds = Credentials.from_service_account_info(creds_dict, scopes=scopes)
+    return gspread.authorize(creds)
 
-creds_dict = dict(st.secrets["gcp_service_account"])
-creds_dict["private_key_id"] = creds_dict["private_key"].replace("\\n", "\n")
-scopes = ["https://www.googleapis.com/auth/spreadsheets", "https://www.googleapis.com/auth/drive"]
-creds = Credentials.from_service_account_info(creds_dict, scopes=scopes)
-gc = gspread.authorize(creds)
-sh = gc.open_by_url("https://docs.google.com/spreadsheets/d/1BZ80vE4pwaFBEv3czzK5wYXcxaesJl3Jw9LJWlJ3XU0")
+@st.cache_data(ttl=600)  # Cache data for 10 minutes
+def load_tournament_data():
+    gc = get_gsheets_client()
+    sh = gc.open_by_url("https://docs.google.com/spreadsheets/d/1BZ80vE4pwaFBEv3czzK5wYXcxaesJl3Jw9LJWlJ3XU0")
+    
+    all_data = []
+    # Fetch from the first 5 worksheets
+    for i in range(5):
+        try:
+            worksheet = sh.get_worksheet(i)
+            if worksheet:
+                all_data.extend(worksheet.get_all_values())
+        except Exception as e:
+            st.error(f"Error loading worksheet {i}: {e}")
+    return all_data
 
+# Configure GenAI
 genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
+# Using gemini-1.5-flash as it's reliable and fast. 
+# Feel free to change to 'gemini-1.5-pro' for more complex reasoning.
 model = genai.GenerativeModel('gemini-3-flash-preview')
 
-worksheet = sh.get_worksheet(1)
-all_values = worksheet.get_all_values()
-
-# Manually process headers to handle duplicates
-headers = []
-seen_headers = {}
-for header in all_values[0]:
-    original_header = header
-    count = 0
-    while header in seen_headers:
-        count += 1
-        header = f"{original_header}_{count}"
-    seen_headers[header] = True
-    headers.append(header)
-
-# Convert remaining rows into a list of dictionaries
-data = []
-for row_index in range(1, len(all_values)):
-    row_data = {}
-    for col_index, cell_value in enumerate(all_values[row_index]):
-        if col_index < len(headers):
-            row_data[headers[col_index]] = cell_value
-    data.append(row_data)
-
+data = load_tournament_data()
 
 # Initialize Session State so fields persist
 if "user_question" not in st.session_state:
@@ -59,31 +54,57 @@ st.text_area(
 if st.button("Ask AI"):
     if st.session_state.user_question:
         with st.spinner("Thinking..."):
-            # This is where you'd call your ask_tournament_bot(st.session_state.user_question)
-            # For now, we'll simulate a response:
             question = st.session_state.user_question
-            context = f"Here is the tournament data: {str(data)}"
+            # Convert list of rows to a more prompt-friendly string
+            context_str = "\n".join([", ".join(row) for row in data])
+            
             prompt = f"""
                 You are a tournament assistant. Use the following data to answer the user's question.
-                If the answer isn't in the data, just say you don't know.
+                If the answer isn't in the data, say you don't know - but also make a calculated guess.
                 
-                {context}
+                Tournament Data:
+                {context_str}
                 
                 User Question: {question}
                 """
-            response = model.generate_content(contents=prompt)
-            st.session_state.ai_answer = response.text
+            try:
+                # Log prompt length for debugging
+                print(f"Sending prompt to AI (length: {len(prompt)})")
+                
+                response = model.generate_content(contents=prompt)
+                
+                # Check for blocked responses or empty candidates
+                if response and hasattr(response, 'candidates') and response.candidates:
+                    candidate = response.candidates[0]
+                    # Check if response was blocked by safety filters
+                    if candidate.finish_reason == 3: # SAFETY
+                        answer = "The response was blocked by safety filters. Please try rephrasing your question."
+                    elif hasattr(candidate.content, 'parts') and candidate.content.parts:
+                        answer = response.text
+                    else:
+                        answer = "The AI returned an empty response. It might be struggling with the context or question."
+                else:
+                    answer = "No response candidates returned from the AI."
+                
+                print(f"AI Response: {answer[:100]}...") # Print first 100 chars to console
+                st.session_state.ai_answer = answer
+                st.session_state.final_answer = answer # Update the text area widget specifically
+                
+            except Exception as e:
+                error_msg = f"An error occurred while communicating with the AI: {str(e)}"
+                st.session_state.ai_answer = error_msg
+                st.session_state.final_answer = error_msg
+                st.error(f"AI Error: {str(e)}")
     else:
         st.warning("Please enter a question first!")
 
 st.divider()
 
-# Large Answer Field (Editable). Note: Making it editable allows you to 'clean up' or add notes to the AI's response.
+# Large Answer Field (Editable). 
+# Note: key="final_answer" ensures that edits made here are saved in session state.
 st.text_area(
     "AI Response", 
     value=st.session_state.ai_answer, 
     height=300, 
     key="final_answer"
 )
-
-
