@@ -102,9 +102,6 @@ st.divider()
 
 # Large Answer Field (Editable). 
 # Note: key="final_answer" ensures that edits made here are saved in session state.
-st.text_area(
-    "AI Response", 
-    value=st.session_state.ai_answer, 
-    height=300, 
-    key="final_answer"
-)
+st.markdown(
+    st.session_state.ai_answer
+    )
