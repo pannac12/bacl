@@ -61,6 +61,7 @@ if st.button("Ask AI"):
             prompt = f"""
                 You are a tournament assistant. Use the following data to answer the user's question.
                 If the answer isn't in the data, say you don't know - but also make a calculated guess.
+                All the players are male.
                 
                 Tournament Data:
                 {context_str}
