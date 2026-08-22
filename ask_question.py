@@ -15,11 +15,11 @@ def get_gsheets_client():
 @st.cache_data(ttl=600)  # Cache data for 10 minutes
 def load_tournament_data():
     gc = get_gsheets_client()
-    sh = gc.open_by_url("https://docs.google.com/spreadsheets/d/1BZ80vE4pwaFBEv3czzK5wYXcxaesJl3Jw9LJWlJ3XU0")
+    sh = gc.open_by_url("https://docs.google.com/spreadsheets/d/1dw86Z--kwti3m-jhfUQfkZT-cnX-Aqp05jK-4ZIzEW0")
     
     all_data = []
-    # Fetch from the first 5 worksheets
-    for i in range(5):
+    # Fetch from the first 3 worksheets
+    for i in range(3):
         try:
             worksheet = sh.get_worksheet(i)
             if worksheet:
