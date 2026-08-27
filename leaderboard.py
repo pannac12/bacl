@@ -14,7 +14,7 @@ col1, col2 = st.columns([1, 9])
 with col1:
     st.image("baca_logo.webp", use_column_width=True)
 with col2:
-    st.header("BACL 2026: Season 1") 
+    st.header("BACL 2026: Season 2") 
 
 worksheetSouth = sh.get_worksheet(2)
 
