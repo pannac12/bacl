@@ -1,6 +1,6 @@
 import streamlit as st
 import gspread
-import google.generativeai as genai
+from google import genai
 from google.oauth2.service_account import Credentials
 
 # Initialize Google Sheets connection
@@ -28,11 +28,9 @@ def load_tournament_data():
             st.error(f"Error loading worksheet {i}: {e}")
     return all_data
 
-# Configure GenAI
-genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
-# Using gemini-1.5-flash as it's reliable and fast. 
-# Feel free to change to 'gemini-1.5-pro' for more complex reasoning.
-model = genai.GenerativeModel('gemini-3-flash-preview')
+# Configure GenAI client
+client = genai.Client(api_key=st.secrets["GEMINI_API_KEY"])
+MODEL_NAME = "gemini-3.6-flash"
 
 data = load_tournament_data()
 
@@ -72,20 +70,23 @@ if st.button("Ask AI"):
                 # Log prompt length for debugging
                 print(f"Sending prompt to AI (length: {len(prompt)})")
                 
-                response = model.generate_content(contents=prompt)
+                response = client.models.generate_content(
+                    model=MODEL_NAME,
+                    contents=prompt,
+                )
                 
-                # Check for blocked responses or empty candidates
-                if response and hasattr(response, 'candidates') and response.candidates:
+                # Check for response content
+                if response and response.text:
+                    answer = response.text
+                elif response and hasattr(response, 'candidates') and response.candidates:
                     candidate = response.candidates[0]
-                    # Check if response was blocked by safety filters
-                    if candidate.finish_reason == 3: # SAFETY
+                    finish_reason = str(getattr(candidate, 'finish_reason', ''))
+                    if "SAFETY" in finish_reason or finish_reason == "3":
                         answer = "The response was blocked by safety filters. Please try rephrasing your question."
-                    elif hasattr(candidate.content, 'parts') and candidate.content.parts:
-                        answer = response.text
                     else:
                         answer = "The AI returned an empty response. It might be struggling with the context or question."
                 else:
-                    answer = "No response candidates returned from the AI."
+                    answer = "No response returned from the AI."
                 
                 print(f"AI Response: {answer[:100]}...") # Print first 100 chars to console
                 st.session_state.ai_answer = answer

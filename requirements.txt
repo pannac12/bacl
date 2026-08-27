@@ -1,4 +1,4 @@
 streamlit
 gspread
-google.generativeai
+google-genai
 google-auth
