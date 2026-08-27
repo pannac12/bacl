@@ -10,11 +10,15 @@ creds = Credentials.from_service_account_info(creds_dict, scopes=scopes)
 gc = gspread.authorize(creds)
 sh = gc.open_by_url("https://docs.google.com/spreadsheets/d/1dw86Z--kwti3m-jhfUQfkZT-cnX-Aqp05jK-4ZIzEW0")
 
-col1, col2 = st.columns([1, 9])
+col1, col2, col3 = st.columns([1, 6, 3])
 with col1:
     st.image("baca_logo.webp", width="stretch")
 with col2:
     st.header("BACL 2026: Season 2") 
+with col3:
+    st.write("")
+    if st.button("💬 Ask a Question", key="nav_ask_question"):
+        st.switch_page("ask_question.py") 
 
 worksheetSouth = sh.get_worksheet(2)
 

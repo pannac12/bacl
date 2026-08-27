@@ -32,6 +32,16 @@ def load_tournament_data():
 client = genai.Client(api_key=st.secrets["GEMINI_API_KEY"])
 MODEL_NAME = "gemini-3.6-flash"
 
+col1, col2, col3 = st.columns([1, 6, 3])
+with col1:
+    st.image("baca_logo.webp", width="stretch")
+with col2:
+    st.header("BACL 2026: Season 2") 
+with col3:
+    st.write("")
+    if st.button("🏆 Leaderboard", key="nav_leaderboard"):
+        st.switch_page("leaderboard.py")
+
 data = load_tournament_data()
 
 # Initialize Session State so fields persist
@@ -41,11 +51,13 @@ if "ai_answer" not in st.session_state:
     st.session_state.ai_answer = "The answer will appear here..."
 
 # Large Question Field. We link it to session_state using the 'key' parameter.
+st.subheader("Ask a Question")
 st.text_area(
     "Ask a question", 
     height=150, 
     placeholder="e.g., Who is going to win the tournament?",
-    key="user_question"
+    key="user_question",
+    label_visibility="collapsed"
 )
 
 # Action Button
