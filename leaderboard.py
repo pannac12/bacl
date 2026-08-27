@@ -12,7 +12,7 @@ sh = gc.open_by_url("https://docs.google.com/spreadsheets/d/1dw86Z--kwti3m-jhfUQ
 
 col1, col2 = st.columns([1, 9])
 with col1:
-    st.image("baca_logo.webp", use_container_width=True)
+    st.image("baca_logo.webp", width="stretch")
 with col2:
     st.header("BACL 2026: Season 2") 
 
