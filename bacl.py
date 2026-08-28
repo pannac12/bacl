@@ -20,6 +20,6 @@ st.markdown(
 )
 
 leaderboard_page = st.Page("leaderboard.py", title="Leaderboard", default=True)
-ask_question_page = st.Page("ask_question.py", title="Ask a Question")
+ask_question_page = st.Page("ask_question.py", title="AI Insights")
 pg = st.navigation([leaderboard_page, ask_question_page], position="hidden")
 pg.run()
