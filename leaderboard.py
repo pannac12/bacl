@@ -32,18 +32,26 @@ playedSouth = [item[0] if item else '0' for item in played_south]
 
 dfSouth = pd.DataFrame({
     'Name': nameSouth,
-    'Points': pointsSouth,
-    'Played': playedSouth
+    'Matches Played': playedSouth,
+    'Matches Won': pointsSouth
 })
 
-dfSouth['Points'] = pd.to_numeric(dfSouth['Points'], errors='coerce').fillna(0)
-dfSouth = dfSouth.sort_values(by='Points', ascending=False)
+dfSouth['Matches Won'] = pd.to_numeric(dfSouth['Matches Won'], errors='coerce').fillna(0)
+dfSouth = dfSouth.sort_values(by='Matches Won', ascending=False)
 
 
-col1, col2 = st.columns(2)
+col1, col2 = st.columns([3, 2])
 
 with col1:
     st.subheader("Players")
-    st.dataframe(dfSouth.style.set_properties(**{'text-align': 'right'}, subset=['Played']), height=900, hide_index=True)
+    st.dataframe(
+        dfSouth,
+        column_config={
+            "Matches Played": st.column_config.Column(alignment="center"),
+            "Matches Won": st.column_config.Column(alignment="center"),
+        },
+        height=900,
+        hide_index=True,
+    )
 
 
